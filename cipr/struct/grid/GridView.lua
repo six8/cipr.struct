@@ -32,8 +32,8 @@ function GridView:initialize(grid, cellSize, x, y)
     self._xHalfSize = self._xCellSize / 2
     self._yHalfSize = self._yCellSize / 2
     self._cols, self._rows = self._grid:getSize()
-    self.width = self._cols * self._cellSize
-    self.height = self._rows * self._cellSize
+    self.width = self._cols * self._xCellSize
+    self.height = self._rows * self._yCellSize
 
     -- Cache x,y to col,row translation
     self._xyCache = {}
