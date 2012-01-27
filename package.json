@@ -1,8 +1,5 @@
 {    
     "name" : "cipr.struct",
     "version" : "0.7.0",
-	"author" : "Mike Thornton <six8@devdetails.com>",
-	"dependencies" : {
-        "cipr.class" : "git://github.com/six8/cipr.struct.git"    
-    }
+	"author" : "Mike Thornton <six8@devdetails.com>"
 }
