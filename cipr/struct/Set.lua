@@ -54,42 +54,50 @@ function Set:clone()
     return c
 end
 
+function Set:__add(b)
+    return self:union(b)
+end
+
 function Set:union(b)
-	local x = self:clone()
+    local x = self:clone()
     local values = b:values()
 
     for i=1,#values do
         x:add(values[i])
-	end
-	return x
+    end
+    return x
 end
 
 function Set:intersection(b)
-	local x = Set:new({})
+    local x = Set:new({})
     local values = b:values()
 
     for i=1,#values do
-	    local v = values[i]
+        local v = values[i]
         if self:contains(v) then
             x:add(v)
-		end
+        end
     end
     
-	return x
+    return x
+end
+
+function Set:__sub(b)
+    return self:difference(b)
 end
 
 function Set:difference(b)
-	local x = Set:new({})
+    local x = Set:new({})
     local values = b:values()
 
     for i=1,#values do
-	    local v = values[i]
+        local v = values[i]
         if not self:contains(v) then
             x:add(v)
-		end
+        end
     end
 
-	return x
+    return x
 end
 
 function Set:size()
