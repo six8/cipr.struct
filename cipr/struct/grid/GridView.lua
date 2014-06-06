@@ -1,6 +1,10 @@
+--[[
+Translates a Grid into display coordinates
+]]--
 local cipr = require 'cipr'
 local Grid = cipr.import 'cipr.struct.grid.Grid'
 local GridView = {}
+local floor = math.floor
 
 function GridView:new(grid, cellSize, x, y)  
     local instance = {}
@@ -16,24 +20,24 @@ end
 :param y: int - Coordinate offset (default 0)
 ]]--
 function GridView:initialize(grid, cellSize, x, y)
+    
     self._grid = grid
     self._x = x or 0
     self._y = y or 0
-
-    self._cellSize = {}
+    
     if type(cellSize) == 'table' then
-        self._xCellSize = cellSize.x
-        self._yCellSize = cellSize.y
+        self.xCellSize = cellSize.x
+        self.yCellSize = cellSize.y
     else
-        self._xCellSize = cellSize
-        self._yCellSize = cellSize
+        self.xCellSize = cellSize
+        self.yCellSize = cellSize
     end
 
-    self._xHalfSize = self._xCellSize / 2
-    self._yHalfSize = self._yCellSize / 2
+    self._xHalfSize = self.xCellSize / 2
+    self._yHalfSize = self.yCellSize / 2
     self._cols, self._rows = self._grid:getSize()
-    self.width = self._cols * self._xCellSize
-    self.height = self._rows * self._yCellSize
+    self.width = self._cols * self.xCellSize
+    self.height = self._rows * self.yCellSize
 
     -- Cache x,y to col,row translation
     self._xyCache = {}
@@ -50,8 +54,8 @@ Pre-generate the coordinates for each cell
 function GridView:_buildCache()
     local x, y
 
-    local xCellSize = self._xCellSize
-    local yCellSize = self._yCellSize
+    local xCellSize = self.xCellSize
+    local yCellSize = self.yCellSize
     for col = 1, self._cols do
         self._colRowToXyMap[col] = {}
 
@@ -72,17 +76,27 @@ function GridView:_buildCache()
     end
 end
 
+function GridView:getSize()
+    return self._cols, self._rows
+end
 
 function GridView:getGrid()
     return self._grid
 end
 
+--[[
+Returns x,y aligned to closest grid coordinates centered on the col/row
+]]--
 function GridView:getXYAlignedToGrid(x, y)
-    local newX = self._x + x - (x % self._xCellSize) + self._xHalfSize
-    local newY = self._y + y - (y % self._yCellSize) + self._yHalfSize
+    local newX = self._x + x - (x % self.xCellSize) + self._xHalfSize
+    local newY = self._y + y - (y % self.yCellSize) + self._yHalfSize
     return newX, newY
 end
 
+--[[
+Add an object that will have it's position managed by
+GridView. Object must implement `move(x, y)`
+]]--
 function GridView:add(obj)
     local col, row = self._grid:add(obj)
     self:_alignCell({col = col, row = row, obj = obj})
@@ -99,10 +113,10 @@ end
 function GridView:getColRowByXY(x, y)
     x, y = self:getXYAlignedToGrid(x, y)
 
-    local col, row = (x - self._xHalfSize) / self._xCellSize + 1,
-                     (y - self._yHalfSize) / self._yCellSize + 1
+    local col, row = (x - self._xHalfSize) / self.xCellSize + 1,
+                     (y - self._yHalfSize) / self.yCellSize + 1
 
-    return col, row
+    return floor(col), floor(row)
 end
 
 --[[
@@ -111,8 +125,14 @@ Get the X, Y coords of a col, row pair.
 For performance reasons it's assumed you're always using valid col, rows.
 ]]--
 function GridView:getXYByColRow(col, row)
-    local cell = self._colRowToXyMap[col][row]
-    return cell.x, cell.y
+    if self._colRowToXyMap[col] then
+        local cell = self._colRowToXyMap[col][row]
+        if cell then
+            return cell.x, cell.y
+        end
+    end
+    
+    return nil, nil
 end
 
 function GridView:getCellAtXy(x, y)
@@ -132,8 +152,7 @@ Move the object of a cell to the cell's x,y coords
 function GridView:_alignCell(cell)
     if cell.obj then
         local x, y = self:getXYByColRow(cell.col, cell.row)
-        cell.obj.x = x
-        cell.obj.y = y
+        cell.obj:move(x, y)
     end
 end
 

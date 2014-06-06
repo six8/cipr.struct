@@ -1,3 +1,6 @@
+--[[
+An efficient 2D grid structure
+]]--
 local math = math
 
 local Grid = {}
@@ -29,6 +32,13 @@ function Grid:new(cols, rows)
 end
 
 function Grid:initialize(cols, rows)
+    self:resize(cols, rows)
+end
+
+--[[
+Re-size grid, will clear contents
+]]--
+function Grid:resize(cols, rows)
     self._rows = rows
     self._cols = cols
 
@@ -48,8 +58,8 @@ function Grid:initialize(cols, rows)
             self._stream[i] = {col, row}
             i = i + 1
         end
-    end
-end
+    end    
+end    
 
 function Grid:getSize()
     return self._cols, self._rows
@@ -120,7 +130,7 @@ function Grid:isEmpty(col, row)
 end
 
 --[[
--- This method will return a set of cell data in a table.
+This method will return a set of cell data in a table.
 ]]--
 function Grid:getCells()
     local data = {}
@@ -131,6 +141,24 @@ function Grid:getCells()
         for row = 1, self._rows do
             local obj = self._cells[col][row]
             data[i] = { obj = obj, col = col, row = row }
+            i = i + 1
+        end
+    end
+
+    return data
+end
+
+--[[
+Call func for each cell in the grid
+]]--
+function Grid:eachCell(func)
+    local col, row, obj
+
+    local i = 1
+    for row = 1, self._rows do
+        for col = 1, self._cols do        
+            local obj = self._cells[col][row]
+            func(col, row, obj)
             i = i + 1
         end
     end
@@ -287,6 +315,19 @@ function Grid:getColumn(col)
 end
 
 --[[
+This method returns a table of all objs in a given column
+--]]
+function Grid:getColumnObjs(col)
+    local cells = {}
+    if self:isValid(col, 1) then
+        for row=1, self._rows do
+            cells[row] = self._cells[col][row]
+        end
+    end
+    return cells
+end
+
+--[[
 This method returns a table of all values in a given row
 --]]
 function Grid:getRow(row)
@@ -298,6 +339,19 @@ function Grid:getRow(row)
                 row = row,
                 obj = self._cells[col][row]
             }
+        end
+    end
+    return cells
+end
+
+--[[
+This method returns a table of all objs in a given row
+--]]
+function Grid:getRowObjs(row)
+    local cells = {}
+    if self:isValid(1, row) then
+        for col=1, self._cols do
+            cells[col] = self._cells[col][row]
         end
     end
     return cells
