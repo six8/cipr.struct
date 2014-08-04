@@ -297,6 +297,52 @@ function Grid:getNeighbors(col, row)
     return data
 end
 
+
+--[[
+Will return a table of 4 elements, with each element
+representing one of the 4 direct (perpendicular) neighbors 
+for the given x,y cell.
+--]]
+function Grid:getDirectNeighbors(col, row)
+    local data = {}
+    if not self:isValid(col, row) then
+        return data
+    end
+
+    local gx, gy, vx, vy
+
+    --[[
+    -- The vectors used are x,y pairs between -1 and +1
+    -- for the given x,y cell.
+    -- IE:
+    --              (0, -1)
+    --     (-1,  0) (0,  0) (1,  0)
+    --              (0,  1)
+    -- Value of 0,0 is ignored, since that is the cell
+    -- we are working with! :D
+    --]]
+
+    local direct = {
+        { 0, -1},
+        {-1,  0},
+        { 1,  0},
+        { 0,  1},
+    }
+
+    for i=1,#direct do
+        local gx, gy = direct[i][1], direct[i][2]
+        vx = col + gx
+        vy = row + gy        
+        if self:isValid(vx, vy) then
+            local dir = Grid.DIRECTIONS[gx][gy]
+            data[i] = {col = vx, row = vy, obj = self._cells[vx][vy], vcol = gx, vrow = gy, dir = dir}
+            i = i + 1
+        end
+    end
+
+    return data
+end
+
 --[[
 This method returns a table of all values in a given column
 --]]
@@ -437,6 +483,28 @@ function Grid:getAllObjs()
         i = i + 1
     end
     return objs
+end
+
+
+--[[
+Get all objects for each row starting at the top.
+Does not return empty cells.
+]]--
+function Grid:getAllObjsByRows()
+    local rows = {}
+    for row = 1, self._rows do
+        local r = {}
+        for col = 1, self._cols do   
+            local obj = self:getCell(col, row)
+            if obj then
+                r[#r+1] = obj
+            end
+        end
+        if #r > 0 then
+            rows[#rows+1] = r
+        end
+    end
+    return rows
 end
 
 return Grid
