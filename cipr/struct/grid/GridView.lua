@@ -5,10 +5,13 @@ local cipr = require 'cipr'
 local Grid = cipr.import 'cipr.struct.grid.Grid'
 local GridView = {}
 local floor = math.floor
+local ceil = math.ceil
+local abs = math.abs
+local round = math.round
 
-function GridView:new(grid, cellSize, x, y)  
+function GridView:new(grid, cellSize, x, y)
     local instance = {}
-    setmetatable(instance, { __index = GridView })  
+    setmetatable(instance, { __index = GridView })
     instance:initialize(grid, cellSize, x, y)
     return instance
 end
@@ -20,11 +23,11 @@ end
 :param y: int - Coordinate offset (default 0)
 ]]--
 function GridView:initialize(grid, cellSize, x, y)
-    
+
     self._grid = grid
     self._x = x or 0
     self._y = y or 0
-    
+
     if type(cellSize) == 'table' then
         self.xCellSize = cellSize.x
         self.yCellSize = cellSize.y
@@ -44,7 +47,7 @@ function GridView:initialize(grid, cellSize, x, y)
 
     -- Cache col,row to x,y translation
     self._colRowToXyMap = {}
-    
+
     self:_buildCache()
 end
 
@@ -56,11 +59,14 @@ function GridView:_buildCache()
 
     local xCellSize = self.xCellSize
     local yCellSize = self.yCellSize
-    for col = 1, self._cols do
+    for col = 0.5, self._cols, 0.5 do
         self._colRowToXyMap[col] = {}
 
-        for row = 1, self._rows do
-            x, y = self:getXYAlignedToGrid((col - 1) * xCellSize, (row - 1) * yCellSize)
+        for row = 0.5, self._rows, 0.5 do
+            -- x, y = self:getXYAlignedToGrid((col - 1) * xCellSize, (row - 1) * yCellSize)
+
+            x = self._x + (col - 1) * xCellSize + self._xHalfSize
+            y = self._y + (row - 1) * yCellSize + self._yHalfSize
 
 --            x = x - (x % cellSize)
 --            y = y - (y % cellSize)
@@ -70,7 +76,7 @@ function GridView:_buildCache()
             if not self._xyCache[x] then
                 self._xyCache[x] = {}
             end
-            
+
             self._xyCache[x][y] = { col = col, row = row }
         end
     end
@@ -109,14 +115,33 @@ function GridView:setCell(col, row, obj)
     self:_alignCell({col = col, row = row, obj = obj})
 end
 
+--[[
+Get col, row that contains x, y.
+]]--
 -- TODO Make use of xy cache
 function GridView:getColRowByXY(x, y)
     x, y = self:getXYAlignedToGrid(x, y)
 
-    local col, row = (x - self._xHalfSize) / self.xCellSize + 1,
-                     (y - self._yHalfSize) / self.yCellSize + 1
+    local col, row = x  / self.xCellSize,
+                     y / self.yCellSize
+    return round(col), round(row)
+end
 
-    return floor(col), floor(row)
+--[[
+Get col, row closest to x, y. Gets it by closest distance
+to the center of the cell.
+]]--
+function GridView:getClosestColRowByXY(x, y)
+    -- x, y = self:getXYAlignedToGrid(x, y)
+
+    -- x = self._x + x - (x % self.xCellSize) + self._xHalfSize
+    -- y = self._y + y - (y % self.yCellSize) + self._yHalfSize
+
+    -- local col, row = (x - self._xHalfSize) / self.xCellSize + 1,
+    --                  (y - self._yHalfSize) / self.yCellSize + 1
+    local col, row = (self._x + x) / self.xCellSize,
+                     (self._y + y) / self.yCellSize
+    return col + 1, row + 1
 end
 
 --[[
@@ -131,7 +156,7 @@ function GridView:getXYByColRow(col, row)
             return cell.x, cell.y
         end
     end
-    
+
     return nil, nil
 end
 
